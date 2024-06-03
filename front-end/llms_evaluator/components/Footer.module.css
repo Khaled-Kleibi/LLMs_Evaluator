@@ -1,0 +1,53 @@
+.footer {
+  display: flex;
+  align-items: center;
+  padding: 10px 18%;
+  background-color: #f1f1f1;
+  border-top: 1px solid #e0e0e0;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+.input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-right: 10px;
+}
+
+.button {
+  padding: 10px 20px;
+  background-color: rgba(69, 89, 164, 0.8);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.1s; 
+}
+
+.button:hover {
+  background-color: rgba(69, 89, 164, 1); 
+}
+
+.button:active {
+  background-color: rgba(69, 89, 164, 0.6); 
+  transform: scale(0.98); 
+}
+
+.button:disabled {
+  background-color: rgba(69, 89, 164, 0.5); 
+  cursor: not-allowed; 
+}
+
+.input:disabled {
+  background-color: #f0f0f0; 
+  cursor: not-allowed;
+}
+
+.eval{
+  margin-left: 30px;
+}
+
+

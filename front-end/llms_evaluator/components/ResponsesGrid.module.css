@@ -1,0 +1,30 @@
+.gridContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between; 
+  height: 100vh; 
+  width: 100vw; 
+  box-sizing: border-box;
+  padding: 0; 
+  margin: 0; 
+}
+
+.responses {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  width: 100%;
+  flex: 1; 
+  overflow: hidden; 
+}
+
+.responseContainer {
+  overflow-y: auto; 
+  max-height: calc(100vh - 60px); 
+}
+
+.footer {
+  height: 60px; 
+  width: 100%;
+}
