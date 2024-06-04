@@ -114,6 +114,32 @@ def query_llama_falcon(combined_prompt):
     output_string = "".join(str(item) for item in output)
     return output_string
 
+# Function to query Mistral-7B
+def query_mistral_7b(combined_prompt):
+    system_prompt = """
+    You are a helpful assistant. You are only allowed to use the relevant information provided below from the search results to answer the user's query. Do not use any other knowledge or assumptions. If the provided information is insufficient, explain why and indicate the lack of information.
+    """
+    engineered_prompt = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n{combined_prompt} [/INST]"
+
+    input = {
+        "top_k": 50,
+        "top_p": 0.9,
+        "prompt": engineered_prompt,
+        "temperature": 0.6,
+        "max_new_tokens": 512,
+        "prompt_template": "{prompt}"
+    }
+
+    response = ""
+    for event in replicate.stream(
+        "mistralai/mistral-7b-instruct-v0.2",
+        input=input
+    ):
+        response += str(event)
+    print("- mistral 7b done!")
+    return response
+
+
 # Evaluation
 def compute_rouge(reference, hypothesis):
     scorer = rouge_scorer.RougeScorer(['rouge2'], use_stemmer=True)
@@ -163,9 +189,15 @@ def evaluate_stream():
         yield f"data: {json.dumps({'model': 'Llama-2-70b-chat', 'response': results['Llama-2-70b-chat'], 'scores': rouge_scores['Llama-2-70b-chat']['rouge2']})}\n\n"
         time.sleep(1)
 
-        results['Falcon-40b-instruct'] = query_llama_falcon(combined_prompt_global)
-        rouge_scores['Falcon-40b-instruct'] = compute_rouge(reference, results['Falcon-40b-instruct'])
-        yield f"data: {json.dumps({'model': 'Falcon-40b-instruct', 'response': results['Falcon-40b-instruct'], 'scores': rouge_scores['Falcon-40b-instruct']['rouge2']})}\n\n"
+        #this model is not working
+        # results['Falcon-40b-instruct'] = query_llama_falcon(combined_prompt_global)
+        # rouge_scores['Falcon-40b-instruct'] = compute_rouge(reference, results['Falcon-40b-instruct'])
+        # yield f"data: {json.dumps({'model': 'Falcon-40b-instruct', 'response': results['Falcon-40b-instruct'], 'scores': rouge_scores['Falcon-40b-instruct']['rouge2']})}\n\n"
+        # time.sleep(1)
+
+        results['Mistral-7b-instruct'] = query_mistral_7b(combined_prompt_global)
+        rouge_scores['Mistral-7b-instruct'] = compute_rouge(reference, results['Mistral-7b-instruct'])
+        yield f"data: {json.dumps({'model': 'Mistral-7b-instruct', 'response': results['Mistral-7b-instruct'], 'scores': rouge_scores['Mistral-7b-instruct']['rouge2']})}\n\n"
         time.sleep(1)  
 
     return Response(generate(), mimetype='text/event-stream')
