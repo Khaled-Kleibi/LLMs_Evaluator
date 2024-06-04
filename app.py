@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, Response, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 import replicate
@@ -7,18 +7,18 @@ import openai
 from langchain_chroma import Chroma
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from rouge_score import rouge_scorer
+import json
+import time
 
-
-#Loading keys
+# Loading keys
 load_dotenv()
 replicate_api_key = os.getenv("REPLICATE_API_KEY")
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-#Loading vector DB
+# Loading vector DB
 embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
 persist_directory = "./chroma_db"
 db = Chroma(persist_directory=persist_directory, embedding_function=embedding_function)
-
 
 # Initializing clients
 replicate_client = replicate.Client(api_token=replicate_api_key)
@@ -114,44 +114,62 @@ def query_llama_falcon(combined_prompt):
     output_string = "".join(str(item) for item in output)
     return output_string
 
-
-#Evaluation
+# Evaluation
 def compute_rouge(reference, hypothesis):
     scorer = rouge_scorer.RougeScorer(['rouge2'], use_stemmer=True)
     scores = scorer.score(reference, hypothesis)
     return scores
 
-
-
-## App endpoint
+# App endpoint
 app = Flask(__name__)
 CORS(app)
 
+combined_prompt_global = ""
+search_results_global = []
+
 @app.route('/evaluate', methods=['POST'])
 def evaluate():
+    global combined_prompt_global, search_results_global
+
     data = request.get_json()
-    
+
     initial_prompt = data['prompt']
-    search_results = query_chroma_db(initial_prompt, db)
-    combined_prompt = f"User prompt: {initial_prompt}\n\nRelevant Information from Search Results:\n"
-    for result in search_results:
-        combined_prompt += result + "\n"
+    search_results_global = query_chroma_db(initial_prompt, db)
+    combined_prompt_global = f"User prompt: {initial_prompt}\n\nRelevant Information from Search Results:\n"
+    for result in search_results_global:
+        combined_prompt_global += result + "\n"
 
+    return jsonify({"status": "processing"}), 200
 
-    results = {}
-    results["GPT-4"] =query_gpt4(combined_prompt)
-    results['GPT-3.5-turbo'] = query_gpt3_5_turbo(combined_prompt)
-    results['Llama-2-70b-chat'] = query_llama_chat(combined_prompt)
-    results['Falcon-40b-instruct'] = query_llama_falcon(combined_prompt)
+@app.route('/evaluate-stream', methods=['GET'])
+def evaluate_stream():
+    def generate():
+        results = {}
+        reference = " ".join(search_results_global)
+        rouge_scores = {}
 
-    # Evaluate
-    reference = " ".join(search_results)
-    rouge_scores = {}
-    for model_name, response in results.items():
-        rouge_scores[model_name] = compute_rouge(reference, response)
-    
-    
-    return jsonify({"results": results, "rouge_scores": rouge_scores})
+        results["GPT-4"] = query_gpt4(combined_prompt_global)
+        rouge_scores["GPT-4"] = compute_rouge(reference, results["GPT-4"])
+        yield f"data: {json.dumps({'model': "GPT-4", 'response': results['GPT-4'], 'scores': rouge_scores['GPT-4']['rouge2']})}\n\n"
+        time.sleep(1)  
+
+        results['GPT-3.5-turbo'] = query_gpt3_5_turbo(combined_prompt_global)
+        rouge_scores['GPT-3.5-turbo'] = compute_rouge(reference, results['GPT-3.5-turbo'])
+        yield f"data: {json.dumps({'model': 'GPT-3.5-turbo', 'response': results['GPT-3.5-turbo'], 'scores': rouge_scores['GPT-3.5-turbo']['rouge2']})}\n\n"
+        time.sleep(1)  
+
+        results['Llama-2-70b-chat'] = query_llama_chat(combined_prompt_global)
+        rouge_scores['Llama-2-70b-chat'] = compute_rouge(reference, results['Llama-2-70b-chat'])
+        yield f"data: {json.dumps({'model': 'Llama-2-70b-chat', 'response': results['Llama-2-70b-chat'], 'scores': rouge_scores['Llama-2-70b-chat']['rouge2']})}\n\n"
+        time.sleep(1)
+
+        results['Falcon-40b-instruct'] = query_llama_falcon(combined_prompt_global)
+        rouge_scores['Falcon-40b-instruct'] = compute_rouge(reference, results['Falcon-40b-instruct'])
+        yield f"data: {json.dumps({'model': 'Falcon-40b-instruct', 'response': results['Falcon-40b-instruct'], 'scores': rouge_scores['Falcon-40b-instruct']['rouge2']})}\n\n"
+        time.sleep(1)  
+
+    return Response(generate(), mimetype='text/event-stream')
+
 
 if __name__ == '__main__':
     app.run(debug=True)

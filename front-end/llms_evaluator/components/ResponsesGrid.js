@@ -4,26 +4,55 @@ import Footer from './Footer';
 import styles from './ResponsesGrid.module.css';
 
 const ResponsesGrid = () => {
-  const [combinedResponses, setCombinedResponses] = useState([]);
+  const [responses, setResponses] = useState([]);
+  const [scores, setScores] = useState({});
 
-  const handleSend = (apiResponses) => {
-    const { results, rouge_scores } = apiResponses;
+  const handleSend = (prompt) => {
+    
+    setResponses([]);
+    setScores({});
 
-    const combinedData = Object.keys(results).map((key) => ({
-      title: key,
-      content: results[key],
-      scores: rouge_scores[key] ? rouge_scores[key].rouge2 : [],
-    }));
+    
+    fetch('http://127.0.0.1:5000/evaluate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt }),
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      // SSE
+      const eventSource = new EventSource('http://127.0.0.1:5000/evaluate-stream');
 
-    setCombinedResponses(combinedData);
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.response) {
+          setResponses((prevResponses) => [...prevResponses, data]);
+        } else if (data.rouge_scores) {
+          setScores((prevScores) => ({ ...prevScores, [data.model]: data.rouge_scores }));
+        }
+      };
+
+      eventSource.onerror = () => {
+        eventSource.close();
+      };
+    })
+    .catch(error => {
+      console.error('There was a problem with the fetch operation:', error);
+    });
   };
 
   return (
     <div className={styles.gridContainer}>
       <div className={styles.responses}>
-        {combinedResponses.map((response, index) => (
+        {responses.map((response, index) => (
           <div key={index} className={styles.responseContainer}>
-            <Response title={response.title} content={response.content} scores={response.scores} />
+            {console.log("here is the res")}
+            {console.log(response)}
+            <Response title={response.model} content={response.response} scores={response.scores} />
           </div>
         ))}
       </div>
