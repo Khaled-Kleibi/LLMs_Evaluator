@@ -5,12 +5,11 @@ import styles from './ResponsesGrid.module.css';
 
 const ResponsesGrid = () => {
   const [responses, setResponses] = useState([]);
-  const [scores, setScores] = useState({});
+  
 
   const handleSend = (prompt) => {
     
     setResponses([]);
-    setScores({});
 
     
     fetch('http://127.0.0.1:5000/evaluate', {
@@ -31,8 +30,6 @@ const ResponsesGrid = () => {
         const data = JSON.parse(event.data);
         if (data.response) {
           setResponses((prevResponses) => [...prevResponses, data]);
-        } else if (data.rouge_scores) {
-          setScores((prevScores) => ({ ...prevScores, [data.model]: data.rouge_scores }));
         }
       };
 
@@ -56,6 +53,7 @@ const ResponsesGrid = () => {
           </div>
         ))}
       </div>
+      <div className={styles.marginDiv}></div>
       <Footer onSend={handleSend} />
     </div>
   );

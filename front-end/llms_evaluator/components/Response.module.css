@@ -5,7 +5,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin: 10px;
   box-sizing: border-box;
-  height: 300px; 
+  height: 400px;
   overflow-y: auto; 
 }
 
@@ -33,6 +33,7 @@
   font-size: 16px;
   line-height: 1.5;
   color: #333;
-  max-height: 150px; 
+  min-height: 150px;
+  max-height: 300px;
   overflow-y: auto; 
 }

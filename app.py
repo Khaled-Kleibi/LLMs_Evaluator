@@ -33,7 +33,7 @@ def query_chroma_db(prompt, db, top_k=5):
 # Function to query GPT-4
 def query_gpt4(combined_prompt):
     system_prompt = """
-    You are a helpful assistant. You are only allowed to use the relevant information provided below from the search results to answer the user's query. Do not use any other knowledge or assumptions. If the provided information is insufficient, explain why and indicate the lack of information.
+    You are a helpful assistant. You are only allowed to use the relevant information provided below from the search results to answer the user's query. Do not use any other knowledge or assumptions. If the provided information is insufficient, explain why and indicate the lack of information. Act as a Q&A chat and start your response with answering the question directly.
     """
     completion = openai.chat.completions.create(
         model="gpt-4",
@@ -48,7 +48,7 @@ def query_gpt4(combined_prompt):
 # Function to query GPT-3.5-turbo
 def query_gpt3_5_turbo(combined_prompt):
     system_prompt = """
-    You are a helpful assistant. You are only allowed to use the relevant information provided below from the search results to answer the user's query. Do not use any other knowledge or assumptions. If the provided information is insufficient, explain why and indicate the lack of information.
+    You are a helpful assistant. You are only allowed to use the relevant information provided below from the search results to answer the user's query. Do not use any other knowledge or assumptions. If the provided information is insufficient, explain why and indicate the lack of information. Act as a Q&A chat and start your response with answering the question directly.
     """
     completion = openai.chat.completions.create(
         model="gpt-3.5-turbo",
@@ -70,7 +70,7 @@ def query_llama_chat (combined_prompt):
             "top_p": 1,
             "prompt": combined_prompt,
             "temperature": 0.5,
-            "system_prompt": "You are a helpful, respectful, and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should only reference the provided relevant information and should not include any other knowledge or assumptions. If the provided information is insufficient, explain why and indicate the lack of information.",
+            "system_prompt": "You are a helpful, respectful, and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should only reference the provided relevant information and should not include any other knowledge or assumptions. If the provided information is insufficient, explain why and indicate the lack of information. Act as a Q&A chat and start your response with answering the question directly without starting phrases like sure!, I'm happy to help or based on provided data.",
             "length_penalty": 1,
             "max_new_tokens": 500,
             "min_new_tokens": -1,
@@ -86,7 +86,7 @@ def query_llama_chat (combined_prompt):
 def query_llama_falcon(combined_prompt):
 
     engineered_prompt = f"""
-    You are a helpful assistant. Given the information below, construct your response referencing only the provided information and not using any other knowledge.
+    You are a helpful assistant. Given the information below, construct your response referencing only the provided information and not using any other knowledge. Act as a Q&A chat and start your response with answering the question directly.
 
     {combined_prompt}
 
@@ -117,7 +117,7 @@ def query_llama_falcon(combined_prompt):
 # Function to query Mistral-7B
 def query_mistral_7b(combined_prompt):
     system_prompt = """
-    You are a helpful assistant. You are only allowed to use the relevant information provided below from the search results to answer the user's query. Do not use any other knowledge or assumptions. If the provided information is insufficient, explain why and indicate the lack of information.
+    You are a helpful assistant. You are only allowed to use the relevant information provided below from the search results to answer the user's query. Do not use any other knowledge or assumptions. If the provided information is insufficient, explain why and indicate the lack of information. Act as a Q&A chat and start your response with answering the question directly.
     """
     engineered_prompt = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n{combined_prompt} [/INST]"
 
